@@ -1,0 +1,4 @@
+interface:
+  display_name: "Select Subagent Models"
+  short_description: "Choose efficient subagent model and reasoning"
+  default_prompt: "Use $selecting-subagent-models before spawning a subagent."
