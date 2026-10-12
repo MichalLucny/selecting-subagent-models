@@ -21,15 +21,15 @@ Score the task before spawning:
 | Failure | cheap retry | costly or high-stakes |
 | Context | narrow artifact | many interacting files |
 
-Interpret the available tiers as follows: GPT-6 Luna is the economical choice for scoped work, and GPT-6 Sol is the stronger choice when the outcome needs more judgment or reliability. Use the FrontierCode cost-per-task results below as a routing signal, not a guarantee for an individual task.
+Interpret the available tiers as follows: GPT-6 Luna is the economical choice for scoped work, and GPT-6.1 Sol is the stronger choice when the outcome needs more judgment or reliability. Use the FrontierCode cost-per-task results below as a routing signal, not a guarantee for an individual task.
 
 | Task profile | Model | Starting effort |
 | --- | --- | --- |
 | Mechanical extraction, formatting, verification, or a tiny specified edit | `gpt-6-luna` | `low` |
 | Scoped coding or coordinated edits with clear requirements and cheap verification | `gpt-6-luna` | `medium` |
 | Harder but still bounded coding where a stronger Luna attempt is cheaper than handing the task to Sol | `gpt-6-luna` | `max` |
-| Ambiguous coding, broad shared state, cross-file synthesis, difficult debugging, or costly failure | `gpt-6-sol` | `medium` |
-| A Sol task with concrete evidence that more reasoning is needed | `gpt-6-sol` | `high` |
+| Ambiguous coding, broad shared state, cross-file synthesis, difficult debugging, or costly failure | `gpt-6.1-sol` | `medium` |
+| A Sol task with concrete evidence that more reasoning is needed | `gpt-6.1-sol` | `high` |
 
 In the supplied FrontierCode benchmark, Luna `medium` scored 35.5% at $0.053 per task, Luna `max` scored 42.4% at $0.11, and Sol `medium` scored 45.9% at $0.80. Sol `medium` cost about 7.3 times Luna `max` for a 3.5 percentage-point gain. Luna `xhigh` cost more and scored slightly lower than Luna `high`; Sol `low` cost much more than Luna `high` for the same aggregate score. Do not select those two dominated settings by default. These are benchmark averages, so task fit and the cost of a wrong answer still govern the choice.
 
