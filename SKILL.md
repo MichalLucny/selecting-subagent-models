@@ -5,54 +5,53 @@ description: Use when preparing to create or configure any subagent with spawn_a
 
 # Selecting Subagent Models
 
-## Core principle
+## Scope and objective
 
-Choose the least expensive model and reasoning effort that has a high probability of completing the exact delegated contract. Honor an explicit user model or effort choice. Apply this skill only when delegation is authorized by the active instructions.
+Apply only when delegation is already authorized. Preserve explicit user choices of model and reasoning effort. Optimize the total cost of an accepted result: initial attempt, verification, coordination, and likely rework.
 
-## Selection
+Classify the actual delegated work before choosing a model:
 
-Score the task before spawning:
+- Mechanical: supplied inputs, exact transformation, deterministic acceptance.
+- Coding: code changes, code review, or reasoning about interacting files.
+- Terminal: environment diagnosis, build or dependency repair, and multi-step tool execution.
 
-| Evidence | Lower tier | Higher tier |
+Use the most specific matching row in the policy table. For mixed tasks, route by the hardest substantial component. For writing, research, and other work outside these coding benchmarks, treat this matrix as an initial hypothesis and prefer evidence from comparable tasks.
+
+## Balanced policy
+
+Use Terra as the default for substantive coding. Spend more on terminal tasks when the table shows a useful improvement in success.
+
+| Delegated task | Model | Starting effort |
 | --- | --- | --- |
-| Contract | exact, bounded | ambiguous, exploratory |
-| Coupling | isolated output | broad shared state |
-| Reasoning | mechanical | multi-step synthesis |
-| Failure | cheap retry | costly or high-stakes |
-| Context | narrow artifact | many interacting files |
+| Mechanical extraction, formatting, or exact verification | `gpt-6-luna` | `low` |
+| Small isolated fix or simple terminal task with clear acceptance | `gpt-6.1-terra` | `low` |
+| Ordinary coding, code review, or cross-file work | `gpt-6.1-terra` | `medium` |
+| Difficult coding or costly missed interactions | `gpt-6.1-terra` | `high` |
+| Multi-step terminal diagnosis or build/environment repair | `gpt-6.1-sol` | `medium` |
+| Terminal work after a demonstrated reasoning gap at Sol medium, or with unusually expensive failure | `gpt-6.1-sol` | `high` |
 
-Interpret the available tiers as follows: GPT-6 Luna is the economical choice for scoped work, and GPT-6.1 Sol is the stronger choice when the outcome needs more judgment or reliability. Use the FrontierCode cost-per-task results below as a routing signal, not a guarantee for an individual task.
+Start multi-step terminal diagnosis at Sol medium, including difficult tasks with objective acceptance checks. Start at high when a medium attempt has demonstrated a reasoning gap or failure would be unusually expensive.
 
-| Task profile | Model | Starting effort |
-| --- | --- | --- |
-| Mechanical extraction, formatting, verification, or a tiny specified edit | `gpt-6-luna` | `low` |
-| Scoped coding or coordinated edits with clear requirements and cheap verification | `gpt-6-luna` | `medium` |
-| Harder but still bounded coding where a stronger Luna attempt is cheaper than handing the task to Sol | `gpt-6-luna` | `max` |
-| Ambiguous coding, broad shared state, cross-file synthesis, difficult debugging, or costly failure | `gpt-6.1-sol` | `medium` |
-| A Sol task with concrete evidence that more reasoning is needed | `gpt-6.1-sol` | `high` |
+On FrontierCode, Terra medium scores 34.5% at $0.2575 versus Sol medium's 33.4% at $0.4107: 37.3% less cost with a higher aggregate score. On Terminal, Sol medium scores 48.0% at $0.6138 versus Terra xhigh's 46.5% at $0.6570. These support different defaults for coding and terminal work.
 
-In the supplied FrontierCode benchmark, Luna `medium` scored 35.5% at $0.053 per task, Luna `max` scored 42.4% at $0.11, and Sol `medium` scored 45.9% at $0.80. Sol `medium` cost about 7.3 times Luna `max` for a 3.5 percentage-point gain. Luna `xhigh` cost more and scored slightly lower than Luna `high`; Sol `low` cost much more than Luna `high` for the same aggregate score. Do not select those two dominated settings by default. These are benchmark averages, so task fit and the cost of a wrong answer still govern the choice.
+## Recovery and expensive settings
 
-Use `low` only when success criteria are explicit and little search is required. Start most scoped coding at Luna `medium`; use Luna `max` when a bounded task needs more reasoning and its result can be checked cheaply. Start Sol at `medium` when judgment or reliability warrants its cost. Use Sol `high` or `xhigh` only when task evidence justifies the additional expense; do not select Sol `max` routinely. If an agent-selected effort override has no clear benefit, omit that field to inherit its default. For automatic model selection, use only a model ID listed in the matrix; never invent another ID. Never omit or change a model or effort field explicitly specified by the user.
+Correct missing context or a local misunderstanding with focused feedback. For a persistent reasoning gap, move Terra low/medium to Terra high for coding, or move to Sol medium/high for terminal work. Reuse the same agent when continuity helps and its model remains suitable; replace it when the model is insufficient. Skip intermediate efforts when the observed problem warrants a larger step.
 
-## Dispatch
+For unusually difficult work, Sol xhigh is a terminal option and Terra max is a coding option. Neither is routine. Choose Sol max on Terminal only when its last aggregate gain is valuable enough: 56.1% versus Terra max's 55.6%, at $1.8228 versus $1.4853. Do not infer that more effort always improves the result.
 
-State the exact task, minimum context, required output shape, and success criteria. A stronger model does not repair a vague prompt.
+## Runtime and dispatch
 
-Add a scout only when its result can materially shrink a larger expensive task. Review a Luna result against the full contract and check relevant edge cases when that is cheap; passing provided tests alone may miss one. After a failed Luna attempt, identify whether the problem was missing context, an unclear contract, or insufficient reasoning. Give the same agent focused feedback for a local, correctable miss before paying for a stronger model. Increase Luna effort for a bounded, checkable task that needs more reasoning; move to Sol `medium` when the work needs judgment across contexts or Luna remains insufficient. Increase Sol effort only after an observable failure or when the cost of failure warrants it. Resume the same agent when continuity matters; replace it when the model choice proved insufficient.
+Use only model IDs and effort values accepted by the current spawn tool. The measured automatic choices are `gpt-6-luna`, `gpt-6.1-terra`, and `gpt-6.1-sol`, with efforts from `low` through `max`. Other available models and `ultra` have no evidence in this dataset; select them only for an explicit user choice or separate task-specific evidence.
 
-## Preflight
+For an automatically selected route, set both `model` and `reasoning_effort` explicitly. When the runtime permits overrides only with an isolated fork, use `fork_turns: "none"` and supply the necessary context. If the user explicitly requires an incompatible model, effort, or full-history fork, explain the conflict instead of silently changing that choice.
 
-Before `spawn_agent`, confirm:
+Supply the exact task, relevant context, required output, and acceptance criteria. Add a scout or reviewer when its expected savings or reduction in rework exceeds its cost. Check the returned artifact against the full contract, including relevant edge cases.
 
-- user overrides preserved;
-- weakest reliable tier selected;
-- reasoning effort justified;
-- coordination overhead lower than expected savings;
-- prompt and success contract are narrow.
+## Evidence
 
-## Sources
+These defaults use the user's Terminal-Bench 4.0 and FrontierCode 2.0 table received on 31 October 2026. Cost/task means a benchmark average, not a token tariff or a spending cap. Aggregate scores do not estimate success probabilities for a specific task, and small score differences have no supplied uncertainty estimates.
 
-- User-provided `FrontierCode.svg` benchmark (28 September 2026): cost per task and aggregate coding score by model and reasoning effort.
-- [OpenAI model selection guidance](https://developers.openai.com/api/docs/guides/model-selection)
-- [GPT-6 model guidance](https://developers.openai.com/api/docs/guides/latest-model)
+Read [references/benchmarks.md](references/benchmarks.md) when comparing alternatives, checking dominance, or revising a route. Compare settings within the relevant benchmark; do not average the two scores into a universal ranking.
+
+General guidance: [OpenAI model selection](https://developers.openai.com/api/docs/guides/model-selection) recommends comparing representative inputs and choosing the lightest setting that meets the quality bar.
